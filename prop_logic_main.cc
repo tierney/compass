@@ -176,6 +176,7 @@ int main() {
   // assert(("hello"_var).evaluate({"hello"}));
   bool out = "hi"_var.evaluate({"hi"});
   assert(out);
+
     // assert(  ("foo"_var).evaluate({"foo"})); // trivially true
     // assert(  ("foo"_var).evaluate_all({"foo"})
     //          == set<set<string>> {{"foo"}} );
