@@ -222,9 +222,15 @@ int main() {
 
     // auto proposition = ("A"_var && !"B"_var).implies("C"_var) && (!"A"_var).iff("B"_var && "C"_var);
 
-    auto proposition = ((("P"_var && "Q"_var) && "R"_var) && ("S"_var && "T"_var))
-        .implies("Q"_var && "S"_var);
-    auto truth_assignments = proposition.evaluate_all({"P", "Q", "R", "S", "T"});
+  auto prop0 = ("P"_var && "Q"_var);
+  auto prop1 = (prop0 && "R"_var);
+  auto prop2 = ("S"_var && "T"_var);
+  auto prop3 = prop1 && prop2;
+  auto proposition = prop3.implies("Q"_var && "S"_var);
+    // auto proposition = ((("P"_var && "Q"_var) && "R"_var) && ("S"_var && "T"_var))
+    //     .implies("Q"_var && "S"_var);
+  auto truth_assignments = proposition.evaluate_all({"P", "Q", "R", "S", "T"});
+
 
     cout << "P    Q    R    S    T" << endl;
     cout << "---------------------" << endl;
