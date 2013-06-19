@@ -20,7 +20,7 @@ set -ex
 rm -rf autom4te.cache
 
 aclocal --force -I m4
-#grep -q LIBTOOL configure.ac && libtoolize -c -f
+grep -q LIBTOOL configure.ac && libtoolize -c -f
 autoconf -f -W all,no-obsolete
 autoheader -f -W all
 automake -a -c -f -W all
