@@ -1,1 +1,2 @@
-automake --version >= 1.13.4. This version is required for the correct copy of ylwrap.
+automake --version >= 1.13.4. This version is required for the correct copy of
+ylwrap.
