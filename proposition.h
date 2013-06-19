@@ -60,8 +60,8 @@ class Proposition {
   };
 
   typedef shared_ptr<Base> pointer;
-
   pointer value;
+
   Proposition(const pointer& value_) : value(value_) {}
 
   struct Variable : Base {

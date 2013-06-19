@@ -1,28 +1,26 @@
 %{
-
-/*
- * Parser.y file
- * To generate the parser run: "bison Parser.y"
- */
-
 #include <string>
 
+#include "norms.h"
 #include "expression.h"
 #include "parser.hh"
 #include "lexer.hh"
 
 namespace {
-int yyerror(yyscan_t scanner,
-                   SExpression **expression,
-                   const char *msg) {
-  fprintf(stderr,"SPECIAL Error:%s %s\n",msg, (*expression)->string); return 0;
+
+int yyerror(yyscan_t scanner, SExpression **expression, const char *msg) {
+  fprintf(stderr,"SPECIAL Error:%s %s\n",msg, (*expression)->string);
+  return 0;
 }
-int yyerror(
-                   SExpression **expression,
-           yyscan_t scanner,        const char *msg) {
-  fprintf(stderr,"SPECIAL Error:%s %s\n",msg, (*expression)->string); return 0;
+int yyerror(SExpression **expression, yyscan_t scanner, const char *msg) {
+  fprintf(stderr,"SPECIAL Error:%s %s\n",msg, (*expression)->string);
+  return 0;
 }
-}
+
+NBlock *normBlock;
+extern int yylex();
+
+} /* namespace */
 %}
 
 %code requires {
@@ -43,9 +41,19 @@ typedef void* yyscan_t;
 %parse-param { yyscan_t scanner }
 
 %union {
-  char *string;
   int value;
   SExpression *expression;
+
+  Norm *node;
+  NBlock *block;
+  NExpression *expr;
+  NStatement *stmt;
+  NIdentifier *ident;
+  NVariableDeclaration *var_decl;
+  std::vector<NVariableDeclaration*> *varvec;
+  std::vector<NExpression*> *expvec;
+  std::string *string;
+  int token;
 }
 
 %left '+' TOKEN_PLUS
@@ -78,6 +86,6 @@ expr
     | expr TOKEN_OR expr { $$ = createOperation( eOR, $1, $3 ); }
     | TOKEN_LPAREN expr TOKEN_RPAREN { $$ = $2; }
     | TOKEN_NUMBER { $$ = createNumber($1); }
-    | TOKEN_STRING { $$ = createString($1); }
+    | TOKEN_STRING { $$ = createString($1->c_str()); }
     ;
 %%

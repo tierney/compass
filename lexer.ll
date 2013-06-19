@@ -5,14 +5,16 @@
  * To generate the lexical analyzer run: "flex Lexer.l"
  */
 
-#include "expression.h"
-#include "parser.hh"
-
 #include <cstdio>
 #include <string>
 
-/* #define YY_DECL extern "C" int yylex() */
+#include "norms.h"
+#include "expression.h"
+#include "parser.hh"
 
+#define SAVE_TOKEN yylval.string = new std::string(yytext, yyleng)
+#define TOKEN(t) (yylval.token = t)
+  /*extern "C" int yywrap() {} */
 %}
 %option outfile="lexer.cc" header-file="lexer.hh"
 
@@ -37,7 +39,7 @@ STRING      [a-zA-Z0-9]+
 {WS}            { /* Skip blanks. */ }
 {NUMBER}        { sscanf(yytext, "%d", &yylval->value); return TOKEN_NUMBER; }
 
-{STRING}        { yylval->string = strdup(yytext); return TOKEN_STRING; }
+{STRING}        { yylval->string = new std::string(strdup(yytext)); return TOKEN_STRING; }
 
 {MULTIPLY}      { return TOKEN_MULTIPLY; }
 {PLUS}          { return TOKEN_PLUS; }
