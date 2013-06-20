@@ -9,12 +9,11 @@
 #include <string>
 
 #include "norms.h"
-#include "expression.h"
+  // #include "expression.h"
 #include "parser.hh"
 
-#define SAVE_TOKEN yylval.string = new std::string(yytext, yyleng)
-#define TOKEN(t) (yylval.token = t)
-  /*extern "C" int yywrap() {} */
+#define SAVE_TOKEN yylval->string = new std::string(yytext, yyleng)
+#define TOKEN(t) (yylval->token = t)
 %}
 %option outfile="lexer.cc" header-file="lexer.hh"
 
@@ -36,21 +35,32 @@ STRING      [a-zA-Z0-9]+
 
 %%
 
-{WS}            { /* Skip blanks. */ }
-{NUMBER}        { sscanf(yytext, "%d", &yylval->value); return TOKEN_NUMBER; }
-
-{STRING}        { yylval->string = new std::string(strdup(yytext)); return TOKEN_STRING; }
-
-{MULTIPLY}      { return TOKEN_MULTIPLY; }
-{PLUS}          { return TOKEN_PLUS; }
-{LPAREN}        { return TOKEN_LPAREN; }
-{RPAREN}        { return TOKEN_RPAREN; }
-{AND}           { return TOKEN_AND; }
-{OR}            { return TOKEN_OR; }
-.               {  }
+[ \t\n]                 ;
+[a-zA-Z_][a-zA-Z0-9_]*  SAVE_TOKEN; return TIDENTIFIER;
+"="                     return TOKEN(TEQUAL);
+"=="                    return TOKEN(TCEQ);
+"!="                    return TOKEN(TCNE);
+"<"                     return TOKEN(TCLT);
+"<="                    return TOKEN(TCLE);
+">"                     return TOKEN(TCGT);
+">="                    return TOKEN(TCGE);
+"("                     return TOKEN(TLPAREN);
+")"                     return TOKEN(TRPAREN);
+"{"                     return TOKEN(TLBRACE);
+"}"                     return TOKEN(TRBRACE);
+"."                     return TOKEN(TDOT);
+","                     return TOKEN(TCOMMA);
+"+"                     return TOKEN(TPLUS);
+"-"                     return TOKEN(TMINUS);
+"*"                     return TOKEN(TMUL);
+"/"                     return TOKEN(TDIV);
+"&&"                    return TOKEN(TAND);
+"||"                    return TOKEN(TOR);
+"!"                     return TOKEN(TNEG);
+.                       printf("Unknown token!\n"); yyterminate();
 
 %%
 
-int yyerror(const char *msg) {
-    fprintf(stderr,"Error:%s\n",msg); return 0;
-}
+/* int yyerror(const char *msg) { */
+/*     fprintf(stderr,"Error:%s\n",msg); return 0; */
+/* } */

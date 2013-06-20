@@ -53,11 +53,19 @@ class NBlock : public NExpression {
   NBlock() {}
 };
 
+class NNegExpression : public NExpression {
+ public:
+  NExpression& exp;
+  bool negated;
+  NNegExpression(NExpression& exp, bool negated) : exp(exp), negated(negated) {}
+};
+
 class NExpressionStatement : public NStatement {
 public:
-    NExpression& expression;
-    NExpressionStatement(NExpression& expression) :
-        expression(expression) {}
+  NExpression& expression;
+  bool negated;
+  NExpressionStatement(NExpression& expression, bool not_negated) :
+      expression(expression), negated(!not_negated) {}
 };
 
 class NVariableDeclaration : public NStatement {
