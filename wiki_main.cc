@@ -1,8 +1,13 @@
 #include <cassert>
 #include <iostream>
+#include <sstream> // writing to memory (a string)
 #include <cstdio>
 #include <set>
 #include <string>
+#include <vector>
+#include <map>
+
+#include <bdd.h>
 
 #include "norms.h"
 // #include "expression.h"
@@ -14,8 +19,10 @@
 extern NBlock* normBlock;
 extern int yyparse(void*);
 
+using std::map;
 using std::set;
 using std::string;
+using std::vector;
 
 // int yyparse(SExpression **expression, yyscan_t scanner);
 
@@ -107,8 +114,112 @@ using std::string;
 //   return 0;
 // }
 
+string method_to_str(NMethodCall* pmc) {
+  vector<string> args;
+  for (auto expr : pmc->arguments) {
+    args.push_back(static_cast<NIdentifier*>(expr)->name);
+  }
+
+  string variable;
+  variable = pmc->id.name + "(" + args[0];
+  args.erase(args.begin());
+  for (auto arg : args) {
+    variable += "," + arg;
+  }
+  variable += ")";
+  return variable;
+}
+
+bdd expression(NExpression& expr, set<string>* vars,
+               map<string, bdd>* meth_to_bdd) {
+  NBinaryOperator *pbp = NULL;
+  NNegExpression *pne = NULL;
+  NIdentifier *pi = NULL;
+  NMethodCall *pmc = NULL;
+
+  switch(expr.stype()) {
+    case kNBINARYOPERATOR:
+      std::cout << "binary" << std::endl;
+      pbp = static_cast<NBinaryOperator*>(&expr);
+      switch(pbp->op) {
+        case (TOR):
+          std::cout << "op: ||" << std::endl;
+          return expression(pbp->lhs, vars, meth_to_bdd) |
+              expression(pbp->rhs, vars, meth_to_bdd);
+        case (TAND):
+          std::cout << "op: &&" << std::endl;
+          return expression(pbp->lhs, vars, meth_to_bdd) &
+              expression(pbp->rhs, vars, meth_to_bdd);
+        default:
+          std::cout << "unknown operator" << std::endl;
+          assert(false);
+      }
+
+    case kNMETHODCALL:
+      pmc = static_cast<NMethodCall*>(&expr);
+      vars->insert(method_to_str(pmc));
+      if (!meth_to_bdd) {
+        bdd toss;
+        return toss;
+      }
+      return meth_to_bdd->find(method_to_str(pmc))->second;
+
+    case kNNEGEXPRESSION:
+      std::cout << "neg!" << std::endl;
+      pne = static_cast<NNegExpression*>(&expr);
+      return !expression(pne->exp, vars, meth_to_bdd);
+
+    // case kNIDENTIFIER:
+    //   pi = static_cast<NIdentifier*>(&expr);
+    //   std::cout << pi->name << std::endl;
+    //   return;
+
+    default:
+      std::cout << expr.stype() << std::endl;
+      std::cout << typeid(expr).name() << std::endl;
+      assert(false);
+  }
+}
+
+void evaluate(NStatement& stmt) {
+  switch (stmt.stype()) {
+    case kNEXPRESSIONSTATEMENT:
+      std::cout << "expression" << std::endl;
+      set<string> vars;
+      // First pass gathers the variables (basically, the method calls).
+      expression(static_cast<NExpressionStatement*>(&stmt)->expression,
+                 &vars, NULL);
+      for (auto var : vars) {
+        std::cout << var << std::endl;
+      }
+
+      bdd_init(1000,100);
+      bdd_setvarnum(vars.size() + 1);
+
+      map<string, bdd> meth_to_bdd;
+      int count = 0;
+      for (auto var : vars) {
+        meth_to_bdd[var] = bdd_ithvar(count);
+        count++;
+      }
+
+      // Second pass plugs in the variables to generate the BDD.
+      bdd res = expression(
+          static_cast<NExpressionStatement*>(&stmt)->expression,
+          &vars, &meth_to_bdd);
+      bdd_printdot(res);
+      bdd_printset(res);
+
+      std::ostringstream oss;
+      oss << res;
+
+      bdd_done();
+      return;
+  }
+}
+
 int main(int argc, char **argv) {
-  const char *expr = "(foo(hi) && me(there,again)) || !bad";
+  const char *expr = "(inrole(p1,teacher) && inrole(p2,student)) || !attribute(msg,confidential)\n(more(to,say))";
 
   yyscan_t scanner;
   YY_BUFFER_STATE state;
@@ -125,7 +236,8 @@ int main(int argc, char **argv) {
   std::cout << normBlock << std::endl;
 
   for (auto stmt : normBlock->statements) {
-    std::cout << typeid(*stmt).name() << std::endl;
+    evaluate(*stmt);
   }
+
   return 0;
 }

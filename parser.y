@@ -93,7 +93,7 @@ stmts : stmt { $$ = new NBlock(); $$->statements.push_back($<stmt>1); }
       ;
 
 stmt : var_decl | func_decl
-     | expr { $$ = new NExpressionStatement(*$1, true); }
+     | expr { $$ = new NExpressionStatement(*$1); }
      ;
 
 block : TLBRACE stmts TRBRACE { $$ = $2; }

@@ -26,6 +26,7 @@ AM_PROG_LEX
 
 # Checks for libraries.
 AC_CHECK_LIB([fl], [main])
+AC_CHECK_LIB([bdd], [main])
 
 # Checks for header files.
 AC_FUNC_ALLOCA
