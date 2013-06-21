@@ -3,7 +3,8 @@
 
 #include <cassert>
 #include <iostream>
-#include <sstream> // writing to memory (a string)
+#include <fstream>
+#include <sstream>
 #include <cstdio>
 #include <set>
 #include <string>
@@ -206,11 +207,15 @@ void evaluate(NStatement& stmt) {
 
       map<string, bdd> meth_to_bdd;
       int count = 0;
+      std::ofstream fh_vars("vars.py");
+      fh_vars << "var_to_label = {";
       for (auto var : vars) {
-        std::cout << count << " : " << var << std::endl;
+        fh_vars << count << " : \"" << var << "\"," << std::endl;
         meth_to_bdd[var] = bdd_ithvar(count);
         count++;
       }
+      fh_vars << "}";
+      fh_vars.close();
 
       bdd_varblockall();
 
