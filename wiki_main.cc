@@ -136,6 +136,7 @@ bdd expression(NExpression& expr, set<string>* vars,
   NNegExpression *pne = NULL;
   NIdentifier *pi = NULL;
   NMethodCall *pmc = NULL;
+  string ms;
 
   switch(expr.stype()) {
     case kNBINARYOPERATOR:
@@ -157,7 +158,10 @@ bdd expression(NExpression& expr, set<string>* vars,
 
     case kNMETHODCALL:
       pmc = static_cast<NMethodCall*>(&expr);
-      vars->insert(method_to_str(pmc));
+      ms.clear();
+      ms = method_to_str(pmc);
+      std::cout << ms << std::endl;
+      vars->insert(ms);
       if (!meth_to_bdd) {
         bdd toss;
         return toss;
@@ -193,21 +197,32 @@ void evaluate(NStatement& stmt) {
         std::cout << var << std::endl;
       }
 
-      bdd_init(1000,100);
+      bdd_init(10000,1000);
       bdd_setvarnum(vars.size() + 1);
+      std::cout << "Vars: " << vars.size() << std::endl;
 
       map<string, bdd> meth_to_bdd;
       int count = 0;
       for (auto var : vars) {
+        std::cout << count << " : " << var << std::endl;
         meth_to_bdd[var] = bdd_ithvar(count);
         count++;
       }
+
+      bdd_varblockall();
 
       // Second pass plugs in the variables to generate the BDD.
       bdd res = expression(
           static_cast<NExpressionStatement*>(&stmt)->expression,
           &vars, &meth_to_bdd);
-      bdd_printdot(res);
+
+      bdd_printorder();
+      bdd_reorder(BDD_REORDER_SIFTITE);
+      bdd_printorder();
+
+      FILE* fdot = fopen("toss.dot", "w");
+      bdd_fprintdot(fdot, res);
+      fclose(fdot);
       bdd_printset(res);
 
       std::ostringstream oss;
@@ -219,7 +234,11 @@ void evaluate(NStatement& stmt) {
 }
 
 int main(int argc, char **argv) {
-  const char *expr = "(inrole(p1,teacher) && inrole(p2,student)) || !attribute(msg,confidential)\n(more(to,say))";
+  const char *expr =
+      "(inrole(p1,instructor) && inrole(p2,adboard) && subject(student) && attr(msg, discip)) ||"
+      "(inrole(p1,chair) && inrole(p2,factencom) && subject(untenfac) && attr(msg, tencase)) ||"
+      "(inrole(p1,instructor) && inrole(p2,admin) && subject(student) && attr(msg,grades)) ||"
+      "(inrole(p1,student) && inrole(p2,admin) && subject(instructor) && attr(msg,courserating))";
 
   yyscan_t scanner;
   YY_BUFFER_STATE state;
