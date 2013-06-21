@@ -1,3 +1,6 @@
+// Example usage:
+// ./wiki_main && python dot_label_to_var.py  > label.dot && dot -Tpng label.dot > toss.png
+
 #include <cassert>
 #include <iostream>
 #include <sstream> // writing to memory (a string)
