@@ -19,6 +19,8 @@
 set -ex
 rm -rf autom4te.cache
 
+./thrift.sh
+
 aclocal --force -I m4
 grep -q LIBTOOL configure.ac && \
 if hash libtoolize 2>&-

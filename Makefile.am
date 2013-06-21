@@ -1,10 +1,27 @@
+noinst_LTLIBRARIES =
+
 include $(top_srcdir)/common.mk
+
+# thrift compiler command. Note that the --out value for the output
+# directory.
+THRIFT_BUILD = $(THRIFT) --gen cpp --out . $<
+
+####
+# Remember to run the generate_thrift_automake.py script once we add a .thrift
+# file OR a new service to an existing .thrift file.
+
+# AM_MAKEFLAGS = -W$(top_srcdir)/src/thrift.mk
+# $(top_srcdir)/src/thrift.mk:
+# 	./generate_thrift_automake.py *.thrift > thrift.mk
+####
+include thrift.mk
+
 
 bin_PROGRAMS = prop_logic_main
 prop_logic_main_SOURCES = prop_logic_main.cc
 prop_logic_main_LDADD = libproposition.la
 
-noinst_LTLIBRARIES = libproposition.la
+noinst_LTLIBRARIES += libproposition.la
 libproposition_la_SOURCES = proposition.cc proposition.h
 
 BUILT_SOURCES = parser.h
