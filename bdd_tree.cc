@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 
+#include <re2/re2.h>
 
 using std::map;
 using std::string;
@@ -28,6 +29,9 @@ void BDDTree::Parse(bdd res, const map<int, string>& bdd_id_to_meth) {
   compass::BDDNode **prev_node_state = NULL;
   map<string, compass::BDDNode *> func_to_node;
   string meth;
+  bool matched = false;
+  string function;
+  string arg0, arg1;
   for (char mychar : oss.str()) {
     // std::cout << "--> " << mychar << std::endl;
     switch (mychar) {
@@ -62,6 +66,13 @@ void BDDTree::Parse(bdd res, const map<int, string>& bdd_id_to_meth) {
         if (func_to_node.find(meth) == func_to_node.end()) {
           new_node = new compass::BDDNode();
           std::cout << "New node " << meth << std::endl;
+          matched = RE2::FullMatch(meth, "(\\w+)\\((\\w+),(\\w+)\\)", &function, &arg0, &arg1);
+          if (matched) {
+            std::cout << function << " " << arg0 << " " << arg1 << std::endl;
+          } else {
+            matched = RE2::FullMatch(meth, "(\\w+)\\((\\w+)\\)", &function, &arg0);
+            std::cout << function << " " << arg0 << std::endl;
+          }
           new_node->set_func(meth);
           func_to_node[meth] = new_node;
         } else {
@@ -87,6 +98,10 @@ void BDDTree::Parse(bdd res, const map<int, string>& bdd_id_to_meth) {
 
 void BDDTree::Print() const {
   root_->Print();
+}
+
+bool BDDTree::Query(const string& query, vector<string>* receivers) {
+  return true;
 }
 
 } // namespace compass

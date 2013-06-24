@@ -29,6 +29,8 @@ using std::set;
 using std::string;
 using std::vector;
 
+typedef bool (*MyFunc)(...);
+typedef map<string, MyFunc> MyMap;
 
 string method_to_str(NMethodCall* pmc) {
   vector<string> args;
@@ -100,7 +102,14 @@ bdd expression(NExpression& expr, set<string>* vars,
   }
 }
 
+bool bfoo() {
+  return true;
+}
+
 void evaluate(NStatement& stmt) {
+
+  MyMap mmap = { {"bfoo", bfoo} };
+
   switch (stmt.stype()) {
     case kNEXPRESSIONSTATEMENT:
       std::cout << "expression" << std::endl;

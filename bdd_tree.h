@@ -2,11 +2,13 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "bdd.h"
 
 using std::map;
 using std::string;
+using std::vector;
 
 namespace compass {
 class BDDNode {
@@ -58,6 +60,7 @@ class BDDTree {
 
   virtual ~BDDTree();
 
+  bool Query(const string& query, vector<string>* receivers);
   void Parse(bdd root, const map<int, string>& bdd_id_to_meth);
   void Print() const;
 
