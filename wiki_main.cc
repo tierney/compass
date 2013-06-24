@@ -13,6 +13,7 @@
 
 #include <bdd.h>
 
+#include "bdd_tree.h"
 #include "norms.h"
 // #include "expression.h"
 #include "parser.hh"
@@ -138,7 +139,6 @@ bdd expression(NExpression& expr, set<string>* vars,
                map<string, bdd>* meth_to_bdd) {
   NBinaryOperator *pbp = NULL;
   NNegExpression *pne = NULL;
-  NIdentifier *pi = NULL;
   NMethodCall *pmc = NULL;
   string ms;
 
@@ -206,12 +206,14 @@ void evaluate(NStatement& stmt) {
       std::cout << "Vars: " << vars.size() << std::endl;
 
       map<string, bdd> meth_to_bdd;
+      map<int, string> bdd_id_to_meth;
       int count = 0;
       std::ofstream fh_vars("vars.py");
       fh_vars << "var_to_label = {";
       for (auto var : vars) {
         fh_vars << count << " : \"" << var << "\"," << std::endl;
         meth_to_bdd[var] = bdd_ithvar(count);
+        bdd_id_to_meth[count] = var;
         count++;
       }
       fh_vars << "}";
@@ -231,10 +233,84 @@ void evaluate(NStatement& stmt) {
       FILE* fdot = fopen("toss.dot", "w");
       bdd_fprintdot(fdot, res);
       fclose(fdot);
-      bdd_printset(res);
 
-      std::ostringstream oss;
-      oss << res;
+      // bdd_printset(res);
+      bdd_printtable(res);
+
+      compass::BDDTree tree;
+      tree.Parse(res, bdd_id_to_meth);
+      tree.Print();
+
+      // std::ostringstream oss;
+      // oss << res;
+      // std::cout << oss.str() << std::endl;
+      // string value;
+      // bool accept;
+      // bool first = false;
+      // compass::BDDNode *root = NULL;
+      // compass::BDDNode *new_node = NULL;
+      // compass::BDDNode **prev_node_state = NULL;
+      // map<string, compass::BDDNode *> func_to_node;
+      // string meth;
+      // for (char mychar : oss.str()) {
+      //   // std::cout << "--> " << mychar << std::endl;
+      //   switch (mychar) {
+      //     case ' ':
+      //       continue;
+      //     case '<':
+      //       // std::cout << "new set" << std::endl;
+      //       first = true;
+      //       continue;
+      //     case ',':
+      //     case '>':
+      //       // Do something with the value;
+      //       accept = stoi(value);
+      //       assert(accept == 0 || accept == 1);
+      //       if (!value.empty()) {
+      //         // std::cout << (accept ? "yes" : "no") << std::endl;
+      //         if (accept) {
+      //           prev_node_state = &(new_node->yes);
+      //         } else {
+      //           prev_node_state = &(new_node->no);
+      //         }
+      //       }
+      //       value.clear();
+      //       // std::cout << "end of set/node" << std::endl;
+      //       continue;
+      //     case ':':
+      //      // Do something with the value;
+      //       if (!value.empty()) {
+      //         // std::cout << stoi(value) << std::endl;
+      //       }
+
+      //       meth = bdd_id_to_meth[stoi(value)];
+      //       if (func_to_node.find(meth) == func_to_node.end()) {
+      //         new_node = new compass::BDDNode();
+      //         new_node->set_func(meth);
+      //         func_to_node[meth] = new_node;
+      //       } else {
+      //         // std::cout << "Found previously created node." << std::endl;
+      //         new_node = func_to_node.find(meth)->second;
+      //       }
+      //       if (NULL != prev_node_state) {
+      //         *prev_node_state = new_node;
+      //       }
+      //       if (first) {
+      //         root = new_node;
+      //         first = false;
+      //       }
+      //       value.clear();
+      //       continue;
+      //     default:
+      //       value += mychar;
+      //       continue;
+      //   }
+      // }
+
+      // std::cout << root->func() << std::endl;
+      // std::cout << root->yes->yes->func() << std::endl;
+      // std::cout << root->no->func() << std::endl;
+
 
       bdd_done();
       return;
