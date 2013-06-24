@@ -32,6 +32,7 @@ class BDDNode {
   }
 
   void Print() const {
+    std::cout << " ";
     if (pyes != NULL) {
       pyes->Print();
     }
