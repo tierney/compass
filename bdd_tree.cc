@@ -48,10 +48,7 @@ void BDDTree::Parse(bdd res, const map<int, string>& bdd_id_to_meth) {
         }
         value.clear();
         // std::cout << "end of set/node" << std::endl;
-
-        // TODO(tierney): Probably need to reset the prev_node-state when this
-        // is an '>' case
-        continue;
+       continue;
       case '>':
         prev_node_state = NULL;
         continue;
