@@ -207,11 +207,18 @@ int main(int argc, char **argv) {
   //     "(inrole(p1,student) && inrole(p2,instructor) && subject(student) && attr(msg,grades)) ||"
   //     "(inrole(p1,student) && inrole(p2,student) && attr(msg,instructor))";
 
-  const char *expr =
-      "(inrole(p1,generation0) && inrole(p2,elder) && subject(p1) && attr(msg, geneticDisease)) ||"
-      "(inrole(p1,generation0) && inrole(p2,generation0) && attr(msg, finances)) ||"
-      "(inrole(p1,generation1) && inrole(p2,generation1) && attr(msg, lowAcademicPerf)) ||"
-      "(inrole(p1,generation1) && inrole(p2,generation1) && attr(msg, parties))";
+  // const char *expr =
+  //     "(inrole(p1,generation0) && inrole(p2,elder) && subject(p1) && attr(msg, geneticDisease)) ||"
+  //     "(inrole(p1,generation0) && inrole(p2,generation0) && attr(msg, finances)) ||"
+  //     "(inrole(p1,generation1) && inrole(p2,generation1) && attr(msg, lowAcademicPerf)) ||"
+  //     "(inrole(p1,generation1) && inrole(p2,generation1) && attr(msg, parties))";
+
+
+  // const char *expr = "inrole(p2, friend) || inrole(p2, fof)";
+
+  const char *expr = "(inrole(p1, circleCreator) && inrole(p2, circleMember)) || "
+      "(inrole(p1, circleMember) && attr(msg, limited))";
+
   yyscan_t scanner;
   YY_BUFFER_STATE state;
 
