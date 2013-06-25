@@ -10,58 +10,49 @@
 
 #include <re2/re2.h>
 
-#include "compass_types.h"
-
 using std::map;
 using std::string;
 
 namespace compass {
 
-typedef bool (*PostFunc)(const Post&, const string&, const string&);
-// typedef std::function<bool(void)> MyFunc;
-// typedef std::function<bool(string,string)> StrFunc;
-// union FuncTypes {
-//   MyFunc no_arg;
-//   StrFunc str_func;
-
-//   FuncType(MyFunc func) : no_arg(func) {}
-
-// };
-typedef map<string, PostFunc> MyMap;
-
-
-// bool bfoo() {
-//   return true;
-// }
-
-// bool inrole(const string& actor, const string& role) {
-//   return (actor.empty());
-//   // return true;
-// }
-
-bool key_value(const string& actor, const string& role) {
+bool key_value(const string& actor, const string& role, leveldb::DB *db) {
+  leveldb::Status s = db->Get(leveldb::ReadOptions(), "whatever", NULL);
+  // assert(s.ok());
   return true;
 }
 
 
-bool subject(const Post& post, const string& actor, const string& ignore) {
-  (void)ignore;
-
-  bool res = (post.q == actor);
+bool subject(const Post& post, const BDDNode& node, leveldb::DB *db) {
+  bool res = (post.q == node.arg0);
   return res;
 }
 
-bool inrole(const Post& post, const string& actor, const string& role) {
+bool inrole(const Post& post, const BDDNode& node, leveldb::DB *db) {
   const string *query = NULL;
-  if (actor == "p1") {
+  if (node.arg0 == "p1") {
     query = &(post.p1);
-  } else if (actor == "p2") {
+  } else if (node.arg0 == "p2") {
     query = &(post.p2);
   }
-  bool res = key_value(*query, role);
+  bool res = key_value(*query, node.arg1, db);
   return res;
 }
 
+bool attr(const Post& post, const BDDNode& node, leveldb::DB *db) {
+  const string *query = NULL;
+  return true;
+}
+
+BDDTree::BDDTree() : root_(NULL) {
+  name_func_["inrole"] = &inrole;
+  name_func_["subject"] = &subject;
+  name_func_["attr"] = &attr;
+
+  leveldb::Options options;
+  options.create_if_missing = true;
+  leveldb::Status status = leveldb::DB::Open(options, "/tmp/testdb", &db_);
+  assert(status.ok());
+}
 
 BDDTree::~BDDTree() {
   delete root_;
@@ -131,10 +122,10 @@ void BDDTree::Parse(bdd res, const map<int, string>& bdd_id_to_meth) {
 
         (*prev_node_state)->accept = true;
         prev_node_state = NULL;
-        std::cout << std::endl;
-        std::cout << root_->no->no->func() << std::endl;
-        std::cout << root_->no->no->yes->yes->yes->yes->accept << std::endl;
-        std::cout << std::endl;
+        // std::cout << std::endl;
+        // std::cout << root_->no->no->func() << std::endl;
+        // std::cout << root_->no->no->yes->yes->yes->yes->accept << std::endl;
+        // std::cout << std::endl;
         continue;
       case ':':
         // Do something with the value;
@@ -143,46 +134,37 @@ void BDDTree::Parse(bdd res, const map<int, string>& bdd_id_to_meth) {
         }
 
         meth = bdd_id_to_meth[stoi(value)];
-        std::cout << meth << " " << std::endl;
+        // std::cout << meth << " " << std::endl;
         if (first) {
           if (NULL == root_) {
             new_node = new compass::BDDNode();
-            std::cout << new_node->func() << std::endl;
+            // std::cout << new_node->func() << std::endl;
             root_ = new_node;
           }
           first = false;
           prev_node_state = &root_;
         }
         assert(NULL != *prev_node_state);
-        std::cout << "COLON " << (*prev_node_state)->func() << std::endl;
-
+        // std::cout << "COLON " << (*prev_node_state)->func() << std::endl;
+        arg0.clear();
+        arg1.clear();
         matched = RE2::FullMatch(meth, "(\\w+)\\((\\w+),(\\w+)\\)", &function, &arg0, &arg1);
         if (matched) {
-          std::cout << function << " " << arg0 << " " << arg1 << std::endl;
+          // std::cout << function << " " << arg0 << " " << arg1 << std::endl;
         } else {
           matched = RE2::FullMatch(meth, "(\\w+)\\((\\w+)\\)", &function, &arg0);
-          std::cout << function << " " << arg0 << std::endl;
+          // std::cout << function << " " << arg0 << std::endl;
         }
 
         if (!((*prev_node_state)->func().empty())) {
-          assert((*prev_node_state)->func() == meth);
+          assert((*prev_node_state)->func() == function);
         } else {
-          (*prev_node_state)->set_func(meth);
+          (*prev_node_state)->set_func(function);
+          (*prev_node_state)->arg0 = arg0;
+          if (!arg1.empty()) {
+            (*prev_node_state)->arg1 = arg1;
+          }
         }
-
-        // if (func_to_node.find(meth) == func_to_node.end()) {
-        //   new_node = new compass::BDDNode();
-        //   std::cout << "New node " << meth << std::endl;
-        //          new_node->set_func(meth);
-        //   func_to_node[meth] = new_node;
-        // } else {
-        //   // std::cout << "Found previously created node." << std::endl;
-        //   new_node = func_to_node.find(meth)->second;
-        // }
-        // if (NULL != prev_node_state) {
-        //   // std::cout << "previous node set" << std::endl;
-        //   *prev_node_state = new_node;
-        // }
 
         value.clear();
         continue;
@@ -197,29 +179,21 @@ void BDDTree::Print() const {
   root_->Print();
 }
 
-bool BDDTree::Query(const string& query, vector<string>* receivers) {
-  MyMap mmap;//  = { {"bfoo", &bfoo},
-  //                {"inrole", &inrole}
-  // };
-  // mmap["bfoo"] = &bfoo;
-  mmap["inrole"] = &inrole;
-  mmap["subject"] = &subject;
 
-  // std::cout << mmap.at("bfoo")() << std::endl;
-  // string temp;
+bool BDDTree::Query(const Post& post, vector<string>* receivers) {
+  // BDDNode* node = root_->no->no->yes->yes->yes->yes;
+  // std::cout << root_->func() << std::endl;
+  // std::cout << node->accept << std::endl;
 
-  // std::cout << mmap.at("inrole")("", "hello") << std::endl;
-  BDDNode* node = root_->no->no->yes->yes;
-  std::cout << root_->func() << std::endl;
-  std::cout << node << std::endl;
-
-  return true;
+  return TreeQuery(post, *root_, receivers);
 }
 
-namespace {
-
-bool TreeQuery(const Post& post, const BDDNode& node, vector<string>* receivers) {
-  BDDNode* next = NULL; // node.func()(post);
+bool BDDTree::TreeQuery(const Post& post, const BDDNode& node, vector<string>* receivers) {
+  BDDNode* next = NULL;
+  std::cout << "Func: " << node.func() << " " << node.arg0 << " " << node.arg1 << std::endl;
+  bool accept = name_func_.at(node.func())(post, node, db_); // node.func()(post);
+  next = (accept) ? node.yes : node.no;
+  std::cout << (accept ? " yes" : " no") << std::endl;
 
   if (next == NULL) {
     return false;
@@ -235,7 +209,5 @@ bool TreeQuery(const Post& post, const BDDNode& node, vector<string>* receivers)
 
   return TreeQuery(post, *next, receivers);
 }
-
-} // namespace
 
 } // namespace compass

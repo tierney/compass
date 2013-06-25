@@ -35,7 +35,7 @@ AM_LFLAGS = -olex.yy.c
 
 bin_PROGRAMS += wiki_main
 wiki_main_SOURCES = lexer.ll parser.y wiki_main.cc expression.c
-wiki_main_LDADD = libproposition.la libbdd_tree.la -lre2
+wiki_main_LDADD = libproposition.la libbdd_tree.la -lre2 -lleveldb -lsnappy
 
 bin_PROGRAMS += buddy
 buddy_SOURCES = buddy.cc

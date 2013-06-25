@@ -20,6 +20,7 @@
 #include "lexer.hh"
 
 #include "proposition.h"
+#include "compass_types.h"
 
 extern NBlock* normBlock;
 extern int yyparse(void*);
@@ -152,7 +153,10 @@ void evaluate(NStatement& stmt) {
       tree.Parse(res, bdd_id_to_meth);
       tree.Print();
       vector<string> recvs;
-      tree.Query("hello", &recvs);
+      compass::Post post;
+      post.q = "untenfac";
+      bool accept = tree.Query(post, &recvs);
+      std::cout << "Accept? " << (accept ? "yes" : "no") << std::endl;
 
       bdd_done();
       return;
