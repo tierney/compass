@@ -1,7 +1,9 @@
 // Example usage:
 // ./wiki_main && python dot_label_to_var.py  > label.dot && dot -Tpng label.dot > toss.png
 
+#include <time.h>
 #include <cassert>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -29,6 +31,8 @@ using std::map;
 using std::set;
 using std::string;
 using std::vector;
+
+timespec diff(timespec start, timespec end);
 
 string method_to_str(NMethodCall* pmc) {
   vector<string> args;
@@ -155,21 +159,59 @@ void evaluate(NStatement& stmt) {
       vector<string> recvs;
       compass::Post post;
       post.q = "untenfac";
-      bool accept = tree.Query(post, &recvs);
+      const int queries = 5000000;
+
+      timespec start, end;
+
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+      bool accept = false;
+      for (int i = 0; i < queries; i++)
+        accept = tree.Query(post, &recvs);
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+      std::cout << diff(start,end).tv_sec << ":" << diff(start,end).tv_nsec << std::endl;
+      int64_t millis = (diff(start,end).tv_sec * 1000000000 + diff(start,end).tv_nsec) / 1000000;
+
+      std::cout << "time (ms) to query " << millis << std::endl;
+      std::cout << "QPS: " <<  queries / (millis / 1000.) << std::endl;
       std::cout << "Accept? " << (accept ? "yes" : "no") << std::endl;
 
       bdd_done();
       return;
   }
 }
+timespec diff(timespec start, timespec end)
+{
+	timespec temp;
+	if ((end.tv_nsec-start.tv_nsec)<0) {
+		temp.tv_sec = end.tv_sec-start.tv_sec-1;
+		temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+	} else {
+		temp.tv_sec = end.tv_sec-start.tv_sec;
+		temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+	}
+	return temp;
+}
+
 
 int main(int argc, char **argv) {
-  const char *expr =
-      "(inrole(p1,instructor) && inrole(p2,adboard) && subject(student) && attr(msg, discip)) ||"
-      "(inrole(p1,chair) && inrole(p2,factencom) && subject(untenfac) && attr(msg, tencase)) ||"
-      "(inrole(p1,instructor) && inrole(p2,admin) && subject(student) && attr(msg,grades)) ||"
-      "(inrole(p1,student) && inrole(p2,admin) && subject(instructor) && attr(msg,courserating))";
+  srand (time(NULL));
+  // const char *expr =
+  //     "(inrole(p1,instructor) && inrole(p2,adboard) && subject(student) && attr(msg, discip)) ||"
+  //     "(inrole(p1,chair) && inrole(p2,factencom) && subject(untenfac) && attr(msg, tencase)) ||"
+  //     "(inrole(p1,instructor) && inrole(p2,admin) && subject(student) && attr(msg,grades)) ||"
+  //     "(inrole(p1,student) && inrole(p2,admin) && subject(instructor) && attr(msg,courserating))";
+  // const char *expr =
+  //     "(inrole(p1,instructor) && inrole(p2,student) && attr(msg,announcement)) ||"
+  //     "(inrole(p1,instructor) && inrole(p2,teamXmember) && attr(msg,teamX)) ||"
+  //     "(inrole(p1,teamXmember) && inrole(p2,teamXmember) && attr(msg,teamX)) || "
+  //     "(inrole(p1,student) && inrole(p2,instructor) && subject(student) && attr(msg,grades)) ||"
+  //     "(inrole(p1,student) && inrole(p2,student) && attr(msg,instructor))";
 
+  const char *expr =
+      "(inrole(p1,generation0) && inrole(p2,elder) && subject(p1) && attr(msg, geneticDisease)) ||"
+      "(inrole(p1,generation0) && inrole(p2,generation0) && attr(msg, finances)) ||"
+      "(inrole(p1,generation1) && inrole(p2,generation1) && attr(msg, lowAcademicPerf)) ||"
+      "(inrole(p1,generation1) && inrole(p2,generation1) && attr(msg, parties))";
   yyscan_t scanner;
   YY_BUFFER_STATE state;
 

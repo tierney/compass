@@ -18,13 +18,13 @@ namespace compass {
 bool key_value(const string& actor, const string& role, leveldb::DB *db) {
   leveldb::Status s = db->Get(leveldb::ReadOptions(), "whatever", NULL);
   // assert(s.ok());
-  return true;
+  return (rand() % 2 == 1);
 }
 
 
 bool subject(const Post& post, const BDDNode& node, leveldb::DB *db) {
   bool res = (post.q == node.arg0);
-  return res;
+  return (rand() % 2 == 1 ? res : !res);
 }
 
 bool inrole(const Post& post, const BDDNode& node, leveldb::DB *db) {
@@ -39,8 +39,8 @@ bool inrole(const Post& post, const BDDNode& node, leveldb::DB *db) {
 }
 
 bool attr(const Post& post, const BDDNode& node, leveldb::DB *db) {
-  const string *query = NULL;
-  return true;
+  bool res = key_value(post.msg, node.arg1, db);
+  return res;
 }
 
 BDDTree::BDDTree() : root_(NULL) {
@@ -190,10 +190,10 @@ bool BDDTree::Query(const Post& post, vector<string>* receivers) {
 
 bool BDDTree::TreeQuery(const Post& post, const BDDNode& node, vector<string>* receivers) {
   BDDNode* next = NULL;
-  std::cout << "Func: " << node.func() << " " << node.arg0 << " " << node.arg1 << std::endl;
+  // std::cout << "Func: " << node.func() << " " << node.arg0 << " " << node.arg1 << std::endl;
   bool accept = name_func_.at(node.func())(post, node, db_); // node.func()(post);
   next = (accept) ? node.yes : node.no;
-  std::cout << (accept ? " yes" : " no") << std::endl;
+  // std::cout << (accept ? " yes" : " no") << std::endl;
 
   if (next == NULL) {
     return false;
