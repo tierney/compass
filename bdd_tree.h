@@ -13,11 +13,11 @@ using std::vector;
 namespace compass {
 class BDDNode {
  public:
-  BDDNode() : pyes(NULL), no(NULL), recv_rule_(false) {}
+  BDDNode() : yes(NULL), no(NULL), accept(false), recv_rule_(false) {}
 
   virtual ~BDDNode() {
-    // if (NULL != pyes) {
-    //   delete pyes;
+    // if (NULL != yes) {
+    //   delete yes;
     // }
     // if (NULL != no) {
     //   delete no;
@@ -35,8 +35,8 @@ class BDDNode {
 
   void Print() const {
     std::cout << " ";
-    if (pyes != NULL) {
-      pyes->Print();
+    if (yes != NULL) {
+      yes->Print();
     }
     std::cout << func_ << std::endl;
     if (no) {
@@ -45,8 +45,10 @@ class BDDNode {
     std::cout << std::endl;
   }
 
-  BDDNode *pyes;
+  BDDNode *yes;
   BDDNode *no;
+  bool accept;
+  string p2;
 
  private:
   bool recv_rule_;
@@ -56,7 +58,7 @@ class BDDNode {
 
 class BDDTree {
  public:
-  BDDTree() {}
+  BDDTree() : root_(NULL) {}
 
   virtual ~BDDTree();
 

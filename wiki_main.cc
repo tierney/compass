@@ -29,9 +29,6 @@ using std::set;
 using std::string;
 using std::vector;
 
-typedef bool (*MyFunc)(...);
-typedef map<string, MyFunc> MyMap;
-
 string method_to_str(NMethodCall* pmc) {
   vector<string> args;
   for (auto expr : pmc->arguments) {
@@ -102,13 +99,7 @@ bdd expression(NExpression& expr, set<string>* vars,
   }
 }
 
-bool bfoo() {
-  return true;
-}
-
 void evaluate(NStatement& stmt) {
-
-  MyMap mmap = { {"bfoo", bfoo} };
 
   switch (stmt.stype()) {
     case kNEXPRESSIONSTATEMENT:
@@ -160,7 +151,8 @@ void evaluate(NStatement& stmt) {
       compass::BDDTree tree;
       tree.Parse(res, bdd_id_to_meth);
       tree.Print();
-
+      vector<string> recvs;
+      tree.Query("hello", &recvs);
 
       bdd_done();
       return;
