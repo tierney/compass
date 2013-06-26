@@ -32,6 +32,60 @@ using std::set;
 using std::string;
 using std::vector;
 
+
+// template <typename... Args>
+// typedef bool (*BFunc)(Args...);
+
+#include <tuple>
+
+template <typename... Args>
+struct variadic_typedef
+{
+    // this single type represents a collection of types,
+    // as the template arguments it took to define it
+};
+
+template <typename... Args>
+struct convert_in_tuple
+{
+    // base case, nothing special,
+    // just use the arguments directly
+    // however they need to be used
+    typedef std::tuple<Args...> type;
+};
+
+template <typename... Args>
+struct convert_in_map {
+  typedef std::map<string, Args...> type;
+};
+
+template <typename... Args>
+struct convert_in_tuple<variadic_typedef<Args...>>
+{
+    // expand the variadic_typedef back into
+    // its arguments, via specialization
+    // (doesn't rely on functionality to be provided
+    // by the variadic_typedef struct itself, generic)
+    typedef typename convert_in_tuple<Args...>::type type;
+};
+
+template <typename... Args>
+struct convert_in_map<variadic_typedef<Args...> > {
+  typedef typename convert_in_map<Args...>::type type;
+};
+
+typedef bool (*OneArg)(const string&);
+typedef bool (*TwoArg)(const string&, const string&);
+typedef bool (*ThreeArgs)(const string&, const string&, const string&);
+typedef variadic_typedef<OneArg, TwoArg, ThreeArgs> FuncTypes;
+
+typedef convert_in_tuple<FuncTypes>::type FuncTuple;
+
+typedef variadic_typedef<int, float> myTypes;
+typedef convert_in_tuple<myTypes>::type int_float_tuple;
+
+
+
 timespec diff(timespec start, timespec end);
 
 string method_to_str(NMethodCall* pmc) {
@@ -192,9 +246,16 @@ timespec diff(timespec start, timespec end)
 	return temp;
 }
 
+bool toss(const string& onearg) {
+  return true;
+}
 
 int main(int argc, char **argv) {
   srand (time(NULL));
+
+  // map<string, FuncTuple> mymap;
+  // mymap["inrole"] = toss;
+
   // const char *expr =
   //     "(inrole(p1,instructor) && inrole(p2,adboard) && subject(student) && attr(msg, discip)) ||"
   //     "(inrole(p1,chair) && inrole(p2,factencom) && subject(untenfac) && attr(msg, tencase)) ||"
