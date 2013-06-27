@@ -196,8 +196,13 @@ void evaluate(NStatement& stmt) {
           static_cast<NExpressionStatement*>(&stmt)->expression,
           &vars, &meth_to_bdd);
 
+      timespec start, end;
+
       bdd_printorder();
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
       bdd_reorder(BDD_REORDER_SIFTITE);
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+      std::cout << "REORDER " << diff(start,end).tv_sec << ":" << diff(start,end).tv_nsec << std::endl;
       bdd_printorder();
 
       FILE* fdot = fopen("toss.dot", "w");
@@ -215,7 +220,6 @@ void evaluate(NStatement& stmt) {
       post.q = "untenfac";
       const int queries = 5000000;
 
-      timespec start, end;
 
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
       bool accept = false;
@@ -256,11 +260,12 @@ int main(int argc, char **argv) {
   // map<string, FuncTuple> mymap;
   // mymap["inrole"] = toss;
 
-  // const char *expr =
-  //     "(inrole(p1,instructor) && inrole(p2,adboard) && subject(student) && attr(msg, discip)) ||"
-  //     "(inrole(p1,chair) && inrole(p2,factencom) && subject(untenfac) && attr(msg, tencase)) ||"
-  //     "(inrole(p1,instructor) && inrole(p2,admin) && subject(student) && attr(msg,grades)) ||"
-  //     "(inrole(p1,student) && inrole(p2,admin) && subject(instructor) && attr(msg,courserating))";
+  const char *expr =
+      "(inrole(p1,instructor) && inrole(p2,adboard) && subject(student) && attr(msg, discip)) ||"
+      "(inrole(p1,chair) && inrole(p2,factencom) && subject(untenfac) && attr(msg, tencase)) ||"
+      "(inrole(p1,instructor) && inrole(p2,admin) && subject(student) && attr(msg,grades)) ||"
+      "(inrole(p1,student) && inrole(p2,admin) && subject(instructor) && attr(msg,courserating))";
+
   // const char *expr =
   //     "(inrole(p1,instructor) && inrole(p2,student) && attr(msg,announcement)) ||"
   //     "(inrole(p1,instructor) && inrole(p2,teamXmember) && attr(msg,teamX)) ||"
@@ -277,8 +282,8 @@ int main(int argc, char **argv) {
 
   // const char *expr = "inrole(p2, friend) || inrole(p2, fof)";
 
-  const char *expr = "(inrole(p1, circleCreator) && inrole(p2, circleMember)) || "
-      "(inrole(p1, circleMember) && attr(msg, limited))";
+  // const char *expr = "(inrole(p1, circleCreator) && inrole(p2, circleMember)) || "
+  //     "(inrole(p1, circleMember) && attr(msg, limited))";
 
   yyscan_t scanner;
   YY_BUFFER_STATE state;
@@ -288,9 +293,22 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  timespec start, end;
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
   state = yy_scan_string(expr, scanner);
 
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+  std::cout << "LEX " << diff(start,end).tv_sec << ":" << diff(start,end).tv_nsec << std::endl;
+  int64_t millis = (diff(start,end).tv_sec * 1000000000 + (float)diff(start,end).tv_nsec) / 1000000;
+  std::cout << "LEX time (ms) to query " << millis << std::endl;
+
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
   yyparse(scanner);
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+  std::cout << "PARSE" << diff(start,end).tv_sec << ":" << diff(start,end).tv_nsec << std::endl;
+  millis = (diff(start,end).tv_sec * 1000000000 + diff(start,end).tv_nsec) / 1000000;
+  std::cout << "PARSE time (ms) to query " << millis << std::endl;
+
 
   std::cout << normBlock << std::endl;
 
